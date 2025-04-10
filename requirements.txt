@@ -1,0 +1,4 @@
+imgbeddings==0.1.0
+matplotlib==3.10.1
+opencv_python==4.11.0.86
+Pillow==11.1.0

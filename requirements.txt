@@ -1,4 +1,5 @@
-imgbeddings==0.1.0
+face_recognition==1.3.0
 matplotlib==3.10.1
+numpy==2.2.4
 opencv_python==4.11.0.86
-Pillow==11.1.0
+Pillow==11.2.1

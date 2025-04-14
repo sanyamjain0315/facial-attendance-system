@@ -4,7 +4,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class VectorDB:
   def __init__(self):
-    self.pkl_path = "student_db.pkl"
+    self.pkl_path = "data/student_db.pkl"
     self.db = pd.read_pickle(self.pkl_path)
   
   def add_entry(self, entry):

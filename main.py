@@ -1,7 +1,7 @@
 import streamlit as st
-from vectordb import VectorDB
-from attendance_logger import AttendanceLogger
-from facial_recognizer import FacialRecognizer
+from utils.vectordb import VectorDB
+from utils.attendance_logger import AttendanceLogger
+from utils.facial_recognizer import FacialRecognizer
 import secrets
 
 

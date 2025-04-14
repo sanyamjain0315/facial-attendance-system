@@ -3,7 +3,7 @@ import pandas as pd
 
 class AttendanceLogger:
   def __init__(self):
-    self.pkl_path = "attendance.pkl"
+    self.pkl_path = "data/attendance.pkl"
     self.db = pd.read_pickle(self.pkl_path)
   
   def log_entry(self, student_info):

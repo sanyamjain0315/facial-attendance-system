@@ -22,10 +22,3 @@ class VectorDB:
     most_similar_idx = np.argmax(similarities)
     most_similar_row = self.db.iloc[most_similar_idx]
     return most_similar_row
-
-if __name__=="__main__":
-  vectordb = VectorDB("student_db.pkl")
-  entry = {"ID":1, "name":"san", "embedding":[]}
-  new_rows = pd.DataFrame([entry])
-  vectordb.db = pd.concat([vectordb.db, new_rows], ignore_index=True)
-  print(vectordb.db)

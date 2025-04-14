@@ -1,10 +1,7 @@
-import pandas as pd
-import numpy as np
 import streamlit as st
 from vectordb import VectorDB
 from attendance_logger import AttendanceLogger
 from facial_recognizer import FacialRecognizer
-import cv2
 import secrets
 
 
@@ -35,7 +32,6 @@ def log_attendance():
     with col2:
         camera_image = st.camera_input("Capture Image")
         if camera_image is not None:
-            st.image(camera_image, caption="Captured Image", use_container_width=True)
             image = fc._read_st_file(camera_image)
             most_similar = vectordb.find_similar(fc.calculate_embeddings(image)[0])
             st.write("Identified student")
@@ -50,7 +46,6 @@ def add_student():
     st.write("Enter new student details:")
     student_name = st.text_input("Student Name")
     
-    # Select image source: upload or camera capture
     image_source = st.radio("Select image source:", ("Upload Image", "Capture via Camera"))
     
     image = None  # This will store the image after reading it
@@ -63,15 +58,12 @@ def add_student():
     else:
         camera_image = st.camera_input("Capture Image")
         if camera_image is not None:
-            st.image(camera_image, caption="Captured Image", use_container_width=True)
             image = fc._read_st_file(camera_image)
     
-    # Check if an image is available
     if image is None:
         st.warning("Please provide an image using the selected method!")
         return
 
-    # Process the image to extract face boxes
     boxes = fc.extract_boxes(image)
     
     # If multiple faces are detected, let the user select one
@@ -94,7 +86,7 @@ def add_student():
         })
         st.success(f"Student {student_name} (ID: {student_id}) added successfully!")
         
-def _select_boxes(faces, boxes, images_per_row=3):
+def _select_boxes(faces, boxes):
     st.write("Please Select only one face")
     cols = st.columns(len(faces))
     for i, face in enumerate(faces):
@@ -116,15 +108,12 @@ def delete_student():
         st.warning("No students available to delete.")
         return
 
-    # Display the current list
     st.dataframe(students[["ID", "name"]])
 
-    # Create display names for selection
     student_choices = students.apply(lambda row: f"{row['name']} (ID: {row['ID']})", axis=1)
     selected_student = st.selectbox("Select a student to delete:", student_choices)
 
     if selected_student:
-        # Extract the student ID from the selected text
         selected_id = selected_student.split("ID: ")[1].rstrip(")")
 
         if st.button("Delete Selected Student"):

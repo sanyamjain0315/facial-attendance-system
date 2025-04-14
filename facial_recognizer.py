@@ -33,30 +33,3 @@ class FacialRecognizer:
         image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
-    
-if __name__=="__main__":
-    fc = FacialRecognizer()
-    
-    # Get images
-    image = fc._read_image("input_images/input.jpg")
-    
-    boxes = fc.extract_boxes(image)
-    
-    # Extract all faces in all images
-    extracted_faces = fc.get_cropped_faces(image, boxes)
-    plt.figure(figsize=(3 * len(extracted_faces), 3))  # width scales with number of faces
-    for i, img in enumerate(extracted_faces):
-        plt.subplot(1, len(extracted_faces), i+1)
-        plt.imshow(img, cmap='gray')
-        plt.axis('off')
-    plt.tight_layout()
-    plt.savefig('output.png', dpi=300)  # Lower DPI is often enough if figure is larger
-    plt.show()
-    
-    # Choose the images to save
-    boxes = boxes[:4]
-    
-    # Create embeddings
-    embeddings = fc.calculate_embeddings(image, boxes)
-    # print(embeddings)
-    # print(len(embeddings))

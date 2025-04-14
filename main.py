@@ -2,15 +2,15 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 from vectordb import VectorDB
+from attendance_logger import AttendanceLogger
 from facial_recognizer import FacialRecognizer
 import cv2
 import secrets
 
 
 # Loading pre-requisites
-student_db = pd.read_pickle("student_db.pkl")
-attendance = pd.read_pickle("attendance.pkl")
-vectordb = VectorDB("student_db.pkl")
+vectordb = VectorDB()
+attendance_logger = AttendanceLogger()
 fc = FacialRecognizer()
 
 # --- Functions for Student Actions ---
@@ -23,47 +23,74 @@ def log_attendance():
     with col1:
         uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
         if uploaded_file is not None:
-            # Placeholder: Process the uploaded image
             st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+            image = fc._read_st_file(uploaded_file)
+            most_similar = vectordb.find_similar(fc.calculate_embeddings(image)[0])
+            st.write("Identified student")
+            st.dataframe(most_similar)
             if st.button("Log Attendance from Upload"):
-                # Placeholder for facial recognition & logging logic
+                attendance_logger.log_entry(most_similar)
                 st.success("Attendance logged from uploaded image!")
 
     with col2:
         camera_image = st.camera_input("Capture Image")
         if camera_image is not None:
-            # Placeholder: Process the camera image
             st.image(camera_image, caption="Captured Image", use_container_width=True)
+            image = fc._read_st_file(camera_image)
+            most_similar = vectordb.find_similar(fc.calculate_embeddings(image)[0])
+            st.write("Identified student")
+            st.dataframe(most_similar)
             if st.button("Log Attendance from Camera"):
-                # Placeholder for facial recognition & logging logic
+                attendance_logger.log_entry(most_similar)
                 st.success("Attendance logged from camera!")
-    
-def view_attendance_history():
-    st.header("Attendance History")
-    st.write("Display previous attendance records here.")
-    # Placeholder: In a real app, retrieve and display attendance history from a database.
-    st.write("Attendance records would be listed here.")
 
 # --- Functions for Teacher Actions ---
 def add_student():
     st.header("Add Student")
     st.write("Enter new student details:")
     student_name = st.text_input("Student Name")
-    uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
+    # Select image source: upload or camera capture
+    image_source = st.radio("Select image source:", ("Upload Image", "Capture via Camera"))
+    
+    image = None  # This will store the image after reading it
+    
+    if image_source == "Upload Image":
+        uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+        if uploaded_file is not None:
+            st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+            image = fc._read_st_file(uploaded_file)
+    else:
+        camera_image = st.camera_input("Capture Image")
+        if camera_image is not None:
+            st.image(camera_image, caption="Captured Image", use_container_width=True)
+            image = fc._read_st_file(camera_image)
+    
+    # Check if an image is available
+    if image is None:
+        st.warning("Please provide an image using the selected method!")
+        return
+
+    # Process the image to extract face boxes
     boxes = fc.extract_boxes(image)
+    
+    # If multiple faces are detected, let the user select one
     if len(boxes) > 1:
         faces = fc.get_cropped_faces(image, boxes)
         box = _select_boxes(faces, boxes)
+    else:
+        box = boxes[0] if boxes else None
+        if box is None:
+            st.error("No face detected in the image. Please try again with a different image.")
+            return
+    
     if st.button("Add Student"):
         embedding = fc.calculate_embeddings(image, [box])[0]
         student_id = secrets.token_hex(4)
         vectordb.add_entry({
-            "ID":student_id,
-            "name":student_name,
-            "embedding":embedding,
+            "ID": student_id,
+            "name": student_name,
+            "embedding": embedding,
         })
         st.success(f"Student {student_name} (ID: {student_id}) added successfully!")
         
@@ -106,9 +133,7 @@ def delete_student():
 
 def view_attendance_records():
     st.header("Attendance Records")
-    st.write("Display attendance records for students here.")
-    # Placeholder: Retrieve and display attendance records from the database
-    st.write("Attendance records would appear here.")
+    st.dataframe(attendance_logger.db)
 
 def view_all_students():
     st.header("All Registered Students")
@@ -129,11 +154,11 @@ def main():
 
     if role == "Student":
         st.subheader("Student Dashboard")
-        option = st.selectbox("Choose an option:", ("Log Attendance", "View Attendance History"))
+        option = st.selectbox("Choose an option:", ("Log Attendance", "View Attendance Records"))
         if option == "Log Attendance":
             log_attendance()
-        elif option == "View Attendance History":
-            view_attendance_history()
+        elif option == "View Attendance Records":
+            view_attendance_records()
     elif role == "Teacher":
         st.subheader("Teacher Dashboard")
         option = st.selectbox("Choose an option:", (

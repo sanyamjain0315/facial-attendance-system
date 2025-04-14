@@ -23,10 +23,16 @@ class FacialRecognizer:
     def calculate_embeddings(self, image, boxes=None):
         return face_recognition.face_encodings(image, boxes)
     
-    def _read_image(self, path):
+    def _read_image_path(self, path):
         image = cv2.imread(path)
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return rgb_image
+    
+    def _read_st_file(self, st_file):
+        file_bytes = np.asarray(bytearray(st_file.read()), dtype=np.uint8)
+        image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return image
     
 if __name__=="__main__":
     fc = FacialRecognizer()
